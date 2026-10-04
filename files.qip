@@ -1,0 +1,159 @@
+# Synthesis source list for the Rampart core.
+# Copyright (C) 2026 RetroShrimp.  GPL-3.0-or-later; see LICENSE and NOTICE.md.
+# Structure follows core/files.qip of the Batman MiSTer core (GPL-3.0).
+#
+# Add game RTL here only, never through the Quartus GUI, and keep game logic out
+# of sys/ (the unmodified MiSTer framework).  Quartus rewrites Rampart.qsf on
+# every compile, so hand-maintained assignments live here instead.
+#
+# Every file listed compiles standalone.  The vendored CPU and sound cores are
+# listed before anything that instantiates them; Quartus analyses every file
+# listed and prunes what is not used.
+
+set_global_assignment -name QIP_FILE sys/sys.qip
+
+# ---- clocking ----
+# clk_sys = 57.272727 MHz = 4 x 14.318181 MHz (PLL 50 MHz M=63 N=5 C=11);
+# outclk_1 is the same rate, phase-shifted, for the SDRAM_CLK pin.
+set_global_assignment -name QIP_FILE rtl/pll.qip
+
+# ============================================================================
+#  analog output alignment (outside the game logic)
+# ============================================================================
+# CRT H-Size / H-Position and analog VGA H/V shift between rampart_core and
+# arcade_video, set from the OSD.  analog_hsize.sv is Umberto Parisi's
+# (rmonic79) line-buffer resampler, vendored with the two small changes its
+# header lists; see NOTICE.md.
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/analog_hsize.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_analog_adjust.sv
+
+# ============================================================================
+#  vendored third-party cores
+# ============================================================================
+# fx68k (Jorge Cwik) is vendored unchanged under rtl/lib/fx68k/ with its own
+# LICENSE and README (GPL-3.0-or-later; NOTICE.md).
+#
+# This SEARCH_PATH is required: fx68k.sv loads microrom.mem and nanorom.mem
+# with relative paths.  If they are not found the microcode ROMs synthesise
+# empty and the core boots to a black screen with no obvious error.  Check
+# for Info (10905) naming each .mem file in the synthesis report.
+set_global_assignment -name SEARCH_PATH rtl/lib/fx68k
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/lib/fx68k/fx68k.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/lib/fx68k/fx68kAlu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/lib/fx68k/uaddrPla.sv
+
+# IKAOPLL (Raki), the YM2413, is vendored unchanged under rtl/lib/ikaopll/
+# with its own LICENSE and README (BSD-2-Clause; NOTICE.md).
+set_global_assignment -name VERILOG_FILE rtl/lib/ikaopll/IKAOPLL.v
+set_global_assignment -name VERILOG_FILE rtl/lib/ikaopll/IKAOPLL_modules/IKAOPLL_dac.v
+set_global_assignment -name VERILOG_FILE rtl/lib/ikaopll/IKAOPLL_modules/IKAOPLL_eg.v
+set_global_assignment -name VERILOG_FILE rtl/lib/ikaopll/IKAOPLL_modules/IKAOPLL_lfo.v
+set_global_assignment -name VERILOG_FILE rtl/lib/ikaopll/IKAOPLL_modules/IKAOPLL_op.v
+set_global_assignment -name VERILOG_FILE rtl/lib/ikaopll/IKAOPLL_modules/IKAOPLL_pg.v
+set_global_assignment -name VERILOG_FILE rtl/lib/ikaopll/IKAOPLL_modules/IKAOPLL_primitives.v
+set_global_assignment -name VERILOG_FILE rtl/lib/ikaopll/IKAOPLL_modules/IKAOPLL_reg.v
+set_global_assignment -name VERILOG_FILE rtl/lib/ikaopll/IKAOPLL_modules/IKAOPLL_timinggen.v
+
+# klax_oki6295.v (Klax MiSTer core, GPL-2.0-or-later), an MSM6295 ADPCM
+# core, kept unchanged as the upstream of rtl/sound/rampart_oki.sv (not
+# instantiated; Quartus prunes it).
+set_global_assignment -name VERILOG_FILE rtl/lib/oki/klax_oki6295.v
+
+# ============================================================================
+#  memory path
+# ============================================================================
+#   rampart_rom_loader    routes the ROM download (ioctl index 0) to SDRAM,
+#                         block RAM and the config bytes
+#   rampart_sdram_loader  byte stream -> 16-bit SDRAM words
+#   rampart_sdram         SDR-SDRAM controller, CL2, bursts of 2/4/8
+#   rampart_nvram_io      MiSTer save/restore of the EEPROM (ioctl index 2)
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/mem/rampart_rom_loader.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/mem/rampart_sdram_loader.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/mem/rampart_sdram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/mem/rampart_nvram_io.sv
+#   rampart_prog_rom      program ROM (and ADPCM) reads from SDRAM, zero-wait
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/mem/rampart_prog_rom.sv
+
+# ============================================================================
+#  main CPU board
+# ============================================================================
+#   rampart_cpu        fx68k at 7.159 MHz
+#   rampart_gal12c     the 12C address-decode GAL (three board variants)
+#   rampart_decode     12C + the 10C/11C decoders
+#   rampart_dtack      /DTACK and /VPA
+#   rampart_slapstic   slapstic 137412-118
+#   rampart_watchdog   7D reset counter / watchdog
+#   rampart_irq        IRQ4 (32V), acknowledged at 0x7E6000
+#   rampart_latch      7B/6C output latches
+#   rampart_eeprom     2816 EEPROM and its unlock flop
+#   rampart_inputs     IN0/IN1 switch inputs
+#   rampart_leta       LETA trackball counters (13A, 12A-1)
+#   rampart_trackball  trackball counts -> LETA CLK/DIR quadrature
+#   rampart_main       the board, wired together
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_cpu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_gal12c.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_decode.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_dtack.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_slapstic.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_watchdog.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_irq.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_latch.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_eeprom.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_inputs.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_leta.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_trackball.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/main/rampart_main.sv
+
+# ============================================================================
+#  video
+# ============================================================================
+#   rampart_video      the block rampart_core instantiates
+#   rampart_sos2       H/V counters, VBLANK, 32V      rampart_sync_out  syncs
+#   rampart_gal7k/8j/4l/8m  the video GALs (8J and 4L also time CPU waits)
+#   rampart_bitmap     bitmap RAM      rampart_moram  MO / work RAM (8M, 4L)
+#   rampart_mob        motion objects  rampart_lb     line buffer
+#   rampart_mix        priority        rampart_cram   colour RAM
+#   rampart_dac        RGB levels
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_video.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_sos2.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_sync_out.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_gal7k.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_gal8j.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_gal4l.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_gal8m.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_bitmap.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_moram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_mob.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_lb.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_mix.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_cram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/video/rampart_dac.sv
+
+# ============================================================================
+#  sound
+# ============================================================================
+#   rampart_oki           MSM6295 (ADPCM from SDRAM)
+#   rampart_snd_coef_rom  filter coefficients (generated)
+#   rampart_snd_filter    the analogue mix and filters as IIR sections
+#   rampart_ym            YM2413 (IKAOPLL) bus write and DAC output
+#   rampart_sound         YM2413 + MSM6295 + filter, the block
+#                         rampart_core instantiates
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/sound/rampart_oki.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/sound/rampart_snd_coef_rom.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/sound/rampart_snd_filter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/sound/rampart_ym.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/sound/rampart_sound.sv
+
+# ============================================================================
+#  cabinet controls (outside the game board)
+# ============================================================================
+#   rampart_tball_axis  MiSTer motion -> paced LETA quadrature, one axis
+#   rampart_controls    pads, mouse, spinners, paddles, sticks -> the board's input lines
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/rampart_tball_axis.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/rampart_controls.sv
+
+# ---- core + emu glue ----
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/rampart_clocks.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/rampart_core.sv
+set_global_assignment -name SDC_FILE Rampart.sdc
+set_global_assignment -name SYSTEMVERILOG_FILE Arcade-Rampart.sv

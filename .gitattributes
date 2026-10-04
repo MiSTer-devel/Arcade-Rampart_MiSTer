@@ -1,0 +1,3 @@
+*.bat text eol=crlf
+*.mem text eol=lf
+*.rbf binary
