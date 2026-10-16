@@ -12,7 +12,7 @@ headers.
 | **fx68k**, a cycle-exact MC68000 with its microcode ROMs | Jorge Cwik (ijor) | GPL-3.0-or-later | `rtl/lib/fx68k/`: vendored verbatim, with its own `LICENSE` and `README.md` |
 | **IKAOPLL**, the YM2413 FM synthesiser (modelled on the chip's die) | Sehyeon Kim (Raki); its README credits nukeykt's Nuked-SMS-FPGA for the 9-bit output design | BSD-2-Clause | `rtl/lib/ikaopll/`: `src/IKAOPLL.v` and `src/IKAOPLL_modules/*.v` vendored verbatim from github.com/ika-musume/IKAOPLL commit `4d393238d1be33ea428a454956270504f037dfa3`, with its `LICENSE` and `README.md` |
 | **`klax_oki6295.v`**, an MSM6295 ADPCM core | the Klax MiSTer core authors | GPL-2.0-or-later | `rtl/lib/oki/`: vendored verbatim |
-| `analog_hsize.sv`, the analog-VGA horizontal stretch | Umberto Parisi (rmonic79), from Arcade-Raiden_MiSTer | GPL-3.0-or-later | `rtl/video/analog_hsize.sv`: vendored by way of the Toobin' and Xybots cores, with two small changes listed in its header (a buffer-size parameter, no RAM init loop) |
+| `crt_adjust.sv`, the CRT Adjust line-buffer engine (H-Size, H-Position, V-Shift) | Umberto Parisi (rmonic79), from MiSTer-CRT-Adjust (github.com/rmonic79/MiSTer-CRT-Adjust, commit c682de9) | GPL-3.0-or-later | `rtl/video/crt_adjust.sv`: vendored with four small changes listed in its header (a buffer-size parameter, no RAM init loop, a sign-extension fix for negative H-Position, and a vertical-blank timing parameter for this raster) |
 | Intel PLL megafunction (50 MHz → 57.272727 MHz) | Intel Corporation (generated IP) | Intel FPGA IP licence, as generated | `rtl/pll.v`, `rtl/pll/` |
 
 All of these licences are compatible with distributing the combined work
@@ -31,6 +31,7 @@ file it came from.
 - SDRAM and ROM loading: `rampart_sdram.sv`, `rampart_sdram_loader.sv`,
   `rampart_rom_loader.sv`, `rampart_nvram_io.sv`
 - Clocking and video output: `rampart_clocks.sv`, `rampart_analog_adjust.sv`
+  (the CRT Adjust glue, from Blasteroids)
 - Main CPU board:
   - `rampart_cpu.sv` (from Skull & Crossbones)
   - `rampart_eeprom.sv` (from Batman)

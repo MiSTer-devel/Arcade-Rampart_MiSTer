@@ -94,7 +94,7 @@ unchanged.
 | Option | Values | Default | What it does |
 | --- | --- | --- | --- |
 | Aspect ratio, Orientation, Scale | | | the usual MiSTer video settings |
-| Analog alignment | CRT H-Size / H-Position, VGA H-Shift / V-Shift | 0 | moves or stretches the analogue picture; the game timing is unchanged |
+| CRT Adjust | Off, On; then CRT H-Size, H-Position, V-Shift | Off, 0 | for an analogue CRT: stretches, moves or shifts the picture; HDMI is untouched while Off; the game timing is unchanged; needs the native 15 kHz output (off when the scandoubler is forced) |
 | Colour levels | Board DAC, MAME | Board DAC | see below |
 | Trackball speed | 0.25x ... 4x | 1x | trackball set only |
 | Trackball X / Y | Normal, Inverted | Normal | trackball set only |
@@ -192,7 +192,8 @@ list back into `Rampart.qsf`, restore the short form, which ends at
   shared Atari board logic.
 - JROK: pin names traced from a real board for the GAL chips, and the
   documented behaviour of his LETA replacement.
-- Umberto Parisi (rmonic79): the analog H-Size resampler.
+- Umberto Parisi (rmonic79): the CRT Adjust line-buffer engine
+  (MiSTer-CRT-Adjust).
 - Alexey Melnikov (Sorgelig) and the MiSTer-devel contributors: the MiSTer
   framework.
 - The MAME team: the Rampart driver served as a functional reference, and

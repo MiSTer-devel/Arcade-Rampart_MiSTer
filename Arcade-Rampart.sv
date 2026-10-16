@@ -9,7 +9,7 @@
 //
 //  Connects rampart_core (the game PCB in one clk_sys domain with integer
 //  clock enables) to the MiSTer framework: PLL, hps_io (ROM download, NVRAM,
-//  controls), analog alignment, arcade_video, audio and the SDRAM pins.
+//  controls), CRT Adjust, arcade_video, audio and the SDRAM pins.
 //  clk_sys = 57.272727 MHz = 4 x the 14.318181 MHz crystal; the pixel clock
 //  is clk_sys/8 = 7.159 MHz, giving a 456 x 262 raster with 336 x 240
 //  visible on a horizontal monitor.
@@ -69,14 +69,17 @@ localparam CONF_STR = {
 	"O[4],Orientation,Original,Flip;",
 	"O[22:20],Scale,Normal,V-Integer,HV-Integer,Narrower HV-Integer;",
 	"-;",
-	// Analog alignment (CRT H-Size / H-Position, VGA H-Shift / V-Shift), the
-	// same page as the other Atari MiSTer cores (rampart_analog_adjust.sv).
-	"P1,Analog alignment;",
+	// CRT Adjust: H-Size, H-Position and V-Shift for an analogue CRT, plus an
+	// On/Off (rtl/video/rampart_analog_adjust.sv).  Off is a bit-exact bypass,
+	// so HDMI is untouched unless it is On.  Every amount is two's complement:
+	// 0, +1..+max, then -min..-1.  H1 hides the amounts while the stage is
+	// off, which includes a forced scandoubler (see `crt_enable`).
+	"P1,CRT Adjust;",
 	"P1-;",
-	"P1O[27:23],CRT H-Size,0,+1,+2,+3,+4,+5,+6,+7,+8,+9,+10,+11,+12,+13,+14,+15,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1;",
-	"P1O[34:28],CRT H-Position,0,+1,+2,+3,+4,+5,+6,+7,+8,+9,+10,+11,+12,+13,+14,+15,+16,+17,+18,+19,+20,+21,+22,+23,+24,+25,+26,+27,+28,+29,+30,+31,+32,+33,+34,+35,+36,+37,+38,+39,+40,+41,+42,+43,+44,+45,+46,+47,+48,+49,+50,+51,+52,+53,+54,+55,+56,+57,+58,+59,+60,+61,+62,+63,-64,-63,-62,-61,-60,-59,-58,-57,-56,-55,-54,-53,-52,-51,-50,-49,-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1;",
-	"P1O[40:35],Analog VGA H-Shift,0,+1,+2,+3,+4,+5,+6,+7,+8,+9,+10,+11,+12,+13,+14,+15,+16,+17,+18,+19,+20,+21,+22,+23,+24,+25,+26,+27,+28,+29,+30,+31,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1;",
-	"P1O[46:41],Analog VGA V-Shift,0,+1,+2,+3,+4,+5,+6,+7,+8,+9,+10,+11,+12,+13,+14,+15,+16,+17,+18,+19,+20,+21,+22,+23,+24,+25,+26,+27,+28,+29,+30,+31,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1;",
+	"P1O[47],CRT Adjust,Off,On;",
+	"H1P1O[52:48],CRT H-Size,0,+1,+2,+3,+4,+5,+6,+7,+8,+9,+10,+11,+12,+13,+14,+15,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1;",
+	"H1P1O[59:53],CRT H-Position,0,+1,+2,+3,+4,+5,+6,+7,+8,+9,+10,+11,+12,+13,+14,+15,+16,+17,+18,+19,+20,+21,+22,+23,+24,+25,+26,+27,+28,+29,+30,+31,+32,+33,+34,+35,+36,+37,+38,+39,+40,+41,+42,+43,+44,+45,+46,+47,+48,+49,+50,+51,+52,+53,+54,+55,+56,+57,+58,+59,+60,+61,+62,+63,-64,-63,-62,-61,-60,-59,-58,-57,-56,-55,-54,-53,-52,-51,-50,-49,-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1;",
+	"H1P1O[65:60],CRT V-Shift,0,+1,+2,+3,+4,+5,+6,+7,+8,+9,+10,+11,+12,+13,+14,+15,+16,+17,+18,+19,+20,+21,+22,+23,+24,+25,+26,+27,+28,+29,+30,+31,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1;",
 	"-;",
 	// Colour DAC: the board's resistor network (default) or MAME's linear table.
 	"O[8],Colour levels,Board DAC,MAME;",
@@ -154,6 +157,11 @@ localparam [26:0] ROM_SZ_MO       = 27'h020000;   // stream 0x400000
 localparam [26:0] ROM_SZ_ADPCM    = 27'h040000;   // stream 0x420000
 localparam [26:0] NVRAM_SZ_EEPROM = 27'h000800;   // ioctl index 2
 
+// CRT Adjust runs only at the native 15 kHz rate: its read rate assumes the
+// native pixel enable, so a forced scandoubler turns it off (upstream's rule).
+// Declared here because status_menumask reads it.
+wire crt_enable = status[47] & ~forced_scandoubler;
+
 hps_io #(.CONF_STR(CONF_STR)) hps_io
 (
 	.clk_sys(clk_sys),
@@ -166,7 +174,7 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 
 	.buttons(buttons),
 	.status(status),
-	.status_menumask({15'd0, joy_panel}),
+	.status_menumask({14'd0, ~crt_enable, joy_panel}),
 
 	.ioctl_download(ioctl_download),
 	.ioctl_wr(ioctl_wr),
@@ -295,16 +303,19 @@ assign AUDIO_R = aud_r;
 wire [7:0] adj_r, adj_g, adj_b;
 wire       adj_hs, adj_vs, adj_hb, adj_vb, adj_ce;
 
-// H_TOTAL is in ce_pix ticks: 456 pixels per line, 262 lines, and ce_pix is
-// ce_7m = clk_sys/8 (CLK_PER_PIX = 8).
-rampart_analog_adjust #(.H_TOTAL(456), .V_TOTAL(262), .CLK_PER_PIX(8)) u_analog_adjust
+// CRT Adjust.  H_TOTAL is in ce_pix ticks: 456 pixels per line, 262 lines,
+// and ce_pix is ce_7m = clk_sys/8 (CLK_PER_PIX = 8).  H-Position is built as
+// a content shift (HPOS_MODE 1); the margins are in rampart_analog_adjust.sv.
+rampart_analog_adjust #(
+	.H_TOTAL(456), .V_TOTAL(262), .CLK_PER_PIX(8), .HPOS_MODE(1), .AW(11)
+) u_analog_adjust
 (
 	.clk        (clk_sys),
 	.ce_pix     (ce_pix),
-	.osd_hsize  (status[27:23]),
-	.osd_hpos   (status[34:28]),
-	.osd_hshift (status[40:35]),
-	.osd_vshift (status[46:41]),
+	.osd_on     (crt_enable),
+	.osd_hsize  (status[52:48]),
+	.osd_hpos   (status[59:53]),
+	.osd_vshift (status[65:60]),
 	.r_in(core_r), .g_in(core_g), .b_in(core_b),
 	.hs_in(core_hs), .vs_in(core_vs), .hb_in(core_hb), .vb_in(core_vb),
 	.r_out(adj_r), .g_out(adj_g), .b_out(adj_b),
