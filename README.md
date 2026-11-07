@@ -39,7 +39,7 @@ is.
 The core needs a MiSTer SDRAM module (32 MB or larger): the program and
 sample ROMs are read from it while the game runs.
 
-1. Copy `releases/Rampart_YYYYMMDD.rbf` to `_Arcade/cores/` on the SD card.
+1. Copy `releases/Arcade-Rampart_YYYYMMDD.rbf` to `_Arcade/cores/` on the SD card.
 2. Copy `releases/Rampart.mra` to `_Arcade/` and the
    `releases/_alternatives/_Rampart/` folder to `_Arcade/_alternatives/`.
 3. Put the ROM zips in `games/mame/` (see below).
@@ -175,10 +175,11 @@ best available choice, and reports from real boards are welcome:
 ## Building
 
 Open `Arcade-Rampart.qpf` in Quartus Prime Lite 17.0.2 and compile the
-`Rampart` revision (`quartus_sh --flow compile Arcade-Rampart -c Rampart`).
-The bitstream is `output_files/Rampart.rbf`. Add source files through
+`Arcade-Rampart` revision
+(`quartus_sh --flow compile Arcade-Rampart -c Arcade-Rampart`). The
+bitstream is `output_files/Arcade-Rampart.rbf`. Add source files through
 `files.qip`, never the Quartus GUI. If a compile writes the expanded pin
-list back into `Rampart.qsf`, restore the short form, which ends at
+list back into `Arcade-Rampart.qsf`, restore the short form, which ends at
 `source files.qip`.
 
 ## Credits

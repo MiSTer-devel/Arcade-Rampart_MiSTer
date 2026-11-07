@@ -26,7 +26,7 @@ build on the Klax, Bad Lands, Vindicators, Xybots, Toobin' and Blasteroids
 cores. Each adapted file keeps its original copyright header and names the
 file it came from.
 
-- Build and glue: `Arcade-Rampart.sv`, `Rampart.qsf`, `Rampart.sdc`,
+- Build and glue: `Arcade-Rampart.sv`, `Arcade-Rampart.qsf`, `Rampart.sdc`,
   `files.qip`, `clean.bat`
 - SDRAM and ROM loading: `rampart_sdram.sv`, `rampart_sdram_loader.sv`,
   `rampart_rom_loader.sv`, `rampart_nvram_io.sv`

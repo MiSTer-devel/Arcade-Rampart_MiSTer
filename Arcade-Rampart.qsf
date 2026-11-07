@@ -10,9 +10,10 @@
 #  project-wide settings.  A compile may write the expanded pin list back
 #  into this file; restore this short form (it ends at `source files.qip`).
 #
-#  The project is Arcade-Rampart.qpf and its revision is `Rampart`, so
-#  `quartus_sh --flow compile Arcade-Rampart -c Rampart` emits
-#  output_files/Rampart.rbf, matching the MRA's <rbf>Rampart</rbf>.
+#  The project is Arcade-Rampart.qpf and its revision is `Arcade-Rampart`,
+#  so `quartus_sh --flow compile Arcade-Rampart -c Arcade-Rampart` emits
+#  output_files/Arcade-Rampart.rbf.  MiSTer arcade RBFs carry the Arcade-
+#  prefix; the MRAs still say <rbf>Rampart</rbf>, without it.
 #
 # --------------------------------------------------------------------------
 

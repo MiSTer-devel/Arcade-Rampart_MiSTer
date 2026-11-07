@@ -3,7 +3,7 @@
 # Structure follows core/files.qip of the Batman MiSTer core (GPL-3.0).
 #
 # Add game RTL here only, never through the Quartus GUI, and keep game logic out
-# of sys/ (the unmodified MiSTer framework).  Quartus rewrites Rampart.qsf on
+# of sys/ (the unmodified MiSTer framework).  Quartus rewrites Arcade-Rampart.qsf on
 # every compile, so hand-maintained assignments live here instead.
 #
 # Every file listed compiles standalone.  The vendored CPU and sound cores are
